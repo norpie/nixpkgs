@@ -3188,6 +3188,10 @@ self: super: with self; {
     ctranslate2-cpp = pkgs.ctranslate2;
   };
 
+  ctranslate2-rocm = callPackage ../development/python-modules/ctranslate2-rocm {
+    ctranslate2-rocm-cpp = pkgs.ctranslate2-rocm;
+  };
+
   ctypesgen = callPackage ../development/python-modules/ctypesgen { };
 
   cu2qu = callPackage ../development/python-modules/cu2qu { };
