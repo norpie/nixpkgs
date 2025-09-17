@@ -8,14 +8,16 @@
 
 mkHyprlandPlugin hyprland {
   pluginName = "hyprspace";
-  version = "0-unstable-2025-07-16";
+  version = "0-unstable-2025-08-11";
 
   src = fetchFromGitHub {
     owner = "KZDKM";
     repo = "hyprspace";
-    rev = "0a82e3724f929de8ad8fb04d2b7fa128493f24f7";
-    hash = "sha256-rTItuAWpzICMREF8Ww8cK4hYgNMRXJ4wjkN0akLlaWE=";
+    rev = "2b61fd2115262243b03aa9afe8dfd8a78e71636c";
+    hash = "sha256-npC+H+Wl60EdrV75sjqm+bbbLbKgCCGn4ALSM0B2OWA=";
   };
+
+  patches = [ ./hyprspace-fix-include-path.patch ];
 
   dontUseCmakeConfigure = true;
 
