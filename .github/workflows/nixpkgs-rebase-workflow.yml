@@ -1,0 +1,87 @@
+name: Auto-rebase norpie branch
+
+on:
+  schedule:
+    # Run nightly at 2 AM UTC
+    - cron: "0 2 * * *"
+
+  workflow_dispatch:
+
+jobs:
+  rebase:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout norpie branch
+        uses: actions/checkout@v4
+        with:
+          ref: norpie
+          fetch-depth: 0
+          token: ${{ secrets.PAT_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "Nixpkgs Rebase Bot"
+          git config user.email "actions@github.com"
+
+      - name: Add upstream remote and fetch
+        run: |
+          git remote add upstream https://github.com/NixOS/nixpkgs.git || true
+          git fetch upstream nixos-unstable
+
+      - name: Rebase onto nixos-unstable
+        id: rebase
+        run: |
+          if git rebase upstream/nixos-unstable; then
+            echo "status=success" >> $GITHUB_OUTPUT
+          else
+            echo "status=failed" >> $GITHUB_OUTPUT
+            git rebase --abort
+            exit 1
+          fi
+
+      - name: Force push to norpie branch
+        if: steps.rebase.outputs.status == 'success'
+        run: |
+          git push --force-with-lease origin norpie
+
+      - name: Create issue on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const title = '🚨 Nixpkgs Rebase Failed';
+            const body = `The automatic rebase of the \`norpie\` branch onto \`nixos-unstable\` failed.
+
+            **Workflow Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            **Date:** ${new Date().toISOString()}
+
+            Please manually resolve the conflicts:
+            \`\`\`bash
+            cd ~/repos/nixpkgs
+            git checkout norpie
+            git fetch upstream nixos-unstable
+            git rebase upstream/nixos-unstable
+            # resolve conflicts
+            git push --force-with-lease origin norpie
+            \`\`\`
+            `;
+
+            // Check if there's already an open issue
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: ['auto-rebase-failure']
+            });
+
+            if (issues.data.length === 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['auto-rebase-failure', 'automated']
+              });
+            }
