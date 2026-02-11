@@ -36,6 +36,8 @@ stdenv.mkDerivation {
 
   mesonBuildType = "release";
 
+  mesonFlags = [ "-Dtests=disabled" ];
+
   # Patch wf-touch to generate pkgconfig
   patches = fetchpatch {
     url = "https://raw.githubusercontent.com/horriblename/hyprgrass/736119f828eecaed2deaae1d6ff1f50d6dabaaba/nix/wf-touch.patch";
