@@ -22,6 +22,7 @@
   libmpdclient,
   libnl,
   libpulseaudio,
+  modemmanager,
   libsigcxx,
   libxkbcommon,
   meson,
@@ -65,6 +66,7 @@
   udevSupport ? true,
   upowerSupport ? true,
   wireplumberSupport ? true,
+  wwanSupport ? true,
   withMediaPlayer ? mprisSupport && false,
   nix-update-script,
 }:
@@ -72,7 +74,7 @@
 let
   libcava =
     let
-      version = "0.10.7-beta";
+      version = "1.0.0";
     in
     {
       inherit version;
@@ -80,8 +82,8 @@ let
       src = fetchFromGitHub {
         owner = "LukashonakV";
         repo = "cava";
-        tag = "v${version}";
-        hash = "sha256-IX1B375gTwVDRjpRfwKGuzTAZOV2pgDWzUd4bW2cTDU=";
+        tag = version;
+        hash = "sha256-0r5aAmTs+FcmS501tNYKxG9H+Pq6i32BDRBEjWW6M74=";
       };
     };
 in
@@ -92,8 +94,8 @@ stdenv.mkDerivation (finalAttrs: {
   src = fetchFromGitHub {
     owner = "Alexays";
     repo = "Waybar";
-    tag = finalAttrs.version;
-    hash = "sha256-49ZKgK96a9uFip+svOdnw397xcEjiftXzd9gyv1H3sU=";
+    rev = "master";
+    hash = "sha256-G6AcGuevhkYflQHhJq9GnLhEMgcI51Y6MYKBQvdRPDc=";
   };
 
   postUnpack = lib.optionalString cavaSupport ''
@@ -150,6 +152,7 @@ stdenv.mkDerivation (finalAttrs: {
   ++ lib.optional udevSupport udev
   ++ lib.optional upowerSupport upower
   ++ lib.optional wireplumberSupport wireplumber
+  ++ lib.optional wwanSupport modemmanager
   ++ lib.optional (cavaSupport || pipewireSupport) pipewire
   ++ lib.optional (!stdenv.hostPlatform.isLinux) libinotify-kqueue;
 
@@ -177,6 +180,7 @@ stdenv.mkDerivation (finalAttrs: {
       "tests" = runTests;
       "upower_glib" = upowerSupport;
       "wireplumber" = wireplumberSupport;
+      "wwan" = wwanSupport;
     })
     ++ (lib.mapAttrsToList lib.mesonBool {
       "experimental" = experimentalPatches;
